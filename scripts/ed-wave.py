@@ -37,7 +37,7 @@ SV=FunctionSpace(mesh,"RTE",1)  # note element type N1curl is equivalent to RTE
 SS=FunctionSpace(mesh,"CG",1)  # order should be 1, 2, 3, ...
 V = SV*SS
 
-# mixed formulation with B_z scale in the plane and E a vector in the plane
+# mixed formulation with B_z a scalar in the plane and E a vector in the plane
 EB = Function(V)
 e, b = TestFunctions(V)
 
