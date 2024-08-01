@@ -67,14 +67,6 @@ F = inner(Dt(E),e)*dx + Dt(B)*b*dx \
   + (grad(E[1])[0]-grad(E[0])[1])*b*dx \
   + (-grad(B)[1]/eps)*e[0]*dx + (grad(B)[0]/eps)*e[1]*dx
 
-# here is attempt at dielectric circle solution BC on normal cpt of electric field
-#alpha = 0.0625*(1.0-circle_eps)/(1.0+circle_eps)
-#DielectricFlux = Function(SV)
-#DielectricFlux.interpolate(as_vector([(1+alpha*(y**2-x**2)/((x**2+y**2)**2)), -2*alpha*x*y/((x**2+y**2)**2)]))
-
-#L = (DielectricFlux[0]*tau)*ds(13) - (DielectricFlux[0]*tau)*ds(15) \
-#  + (DielectricFlux[1]*tau)*ds(16) - (DielectricFlux[1]*tau)*ds(14) \
-
 # this is intended to be direct solver
 linparams = {"mat_type": "aij",
           "snes_type": "ksponly",
