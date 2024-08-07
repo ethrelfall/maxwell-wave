@@ -1,6 +1,7 @@
 # ed-wave-elliptic
 # electromagnetic wave propagation with dielectric
 # using FEEC
+# extra: optionally do a scan over wavenumber and see the eigenmodes appear
 # extra: attempt at finding eigenmodes of the square at end of file (currently disabled)
 # Ed Threlfall 7 August 2024
 
@@ -73,6 +74,25 @@ wall_time = end-start
 print("done.")
 print("\n")
 print("wall time:"+str(wall_time)+"\n")
+
+quit()
+
+# there follows code to scan in wavenumber and output the solutions
+# this is like shooting method, it shows the eigenfunctions as resonances
+
+animfile = File("ed-wave-elliptic_anim.pvd")
+for i in range (1,1000):
+   kmag = float(i)/50
+   kx = (2*pi*kmag/2)*cos(theta)
+   ky = (2*pi*kmag/2)*sin(theta)
+   a = ( inner(sigma, tau) - div(eps*u)*tau +sigma*div(v)+inner(curl(u),curl(v))-(kx*kx+ky*ky)*eps*inner(u,v)) *dx \
+     - ((cos(theta)*kx+sin(theta)*ky)*cos(kx*x+ky*y)*(-v[1]))*ds(13) \
+     - ((cos(theta)*kx+sin(theta)*ky)*cos(kx*x+ky*y)*(-v[0]))*ds(14) \
+     - ((cos(theta)*kx+sin(theta)*ky)*cos(kx*x+ky*y)*( v[1]))*ds(15) \
+     - ((cos(theta)*kx+sin(theta)*ky)*cos(kx*x+ky*y)*( v[0]))*ds(16)
+   solve(a==0, usigma, solver_parameters=linparams)
+   animfile.write(usigma.sub(0), usigma.sub(1))
+   print("run "+str(i))
 
 quit()
 
