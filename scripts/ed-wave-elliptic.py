@@ -96,9 +96,12 @@ for i in range (1,1000):
 
 quit()
 
-# there follows an attempt to obtain the harmonics of a similar system
-# does not currently work as I don't know how to include the weak bc (ds term gives errors when call assemble)
-# nonsense eigenvalues / functions without BCs
+# there follows an attempt to obtain the harmonics - homogeneous BCs, zero-eigenvalue solutions
+# get the lowest eigenvalues, zero-eigenvalue ones are harmonics
+
+# this choice gives a nice near-harmonic i.e. eigenvalue close to zero (fac of pi is due to silly definition of kmag)
+# it looks a bit like a magnetron ...
+kx=(196/50)*pi
 
 from firedrake.petsc import PETSc
 try:
@@ -108,14 +111,11 @@ except ImportError:
 		warning("Unable to import SLEPc, eigenvalue computation not possible (try firedrake-update --slepc)")
 		sys.exit(0)
 
-u2 = TrialFunction(SV)
+u2, sigma2 = TrialFunctions(V)
+v2, tau2 = TestFunctions(V)
 
-v2 = TestFunction(SV)
-
-# attempt to get eigenvalues in D. Arnold SIAM textbook "Finite Element Exterior Calculus" (p.9)
-a2 = ( inner(curl(u2),curl(v2))) *dx \
-  - (1*(-v2[1]))*ds   # SETTING WEAK BC THIS WAY GIVES ERROR: for Arnold example I want E cross n = 0 on the bdy
-m = inner(u2,v2)*dx \
+a2 = ( inner(sigma2, tau2) - div(eps*u2)*tau2 +sigma2*div(v2)+inner(curl(u2),curl(v2))-(kx*kx+ky*ky)*eps*inner(u2,v2)) *dx
+m = inner(u2,v2)*dx
 
 petsc_a = assemble(a2).M.handle
 petsc_m = assemble(m).M.handle
@@ -126,7 +126,6 @@ opts = PETSc.Options()
 opts.setValue("eps_gen_hermitian", None)
 opts.setValue("st_pc_factor_shift_type", "NONZERO")
 opts.setValue("eps_type", "krylovschur")
-opts.setValue("eps_smallest_real", None)
 opts.setValue("eps_tol", 1e-10)
 
 es = SLEPc.EPS().create(comm=COMM_WORLD)
@@ -137,6 +136,7 @@ es.setFromOptions()
 st=es.getST()
 st.setType(SLEPc.ST.Type.SINVERT)
 es.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+es.setInterval(1,2)
 
 es.solve()
 
@@ -161,11 +161,14 @@ File("ed-wave-elliptic_eigenmode_u.pvd").write(eigenmode)
 print("eigenvalue value:")
 print(lam)
 
+# try removing the harmonic from the solution obtained earlier ...
+# gives funny-looking results
 purified = Function(SV)
-purified.interpolate(usigma.sub(0) - inner(usigma.sub(0), eigenmode)*eigenmode)
+purified.interpolate(usigma.sub(0) - 1.0*(inner(usigma.sub(0), eigenmode)/inner(eigenmode, eigenmode))*eigenmode)
 File("ed-wave-purified.pvd").write(purified)
 
 for i in range (0, nconv):
    lam1 = es.getEigenpair(i, vr, vi)
    print("eigenvalue " +str(i)+" value:")
    print(lam1)
+
